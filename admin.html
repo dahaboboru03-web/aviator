@@ -1,0 +1,309 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aviator Admin</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { overflow: auto; }
+    .admin-wrap { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    .admin-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .admin-card h1 { margin: 0 0 8px; font-size: 20px; }
+    .admin-card h2 { margin: 0 0 10px; font-size: 15px; }
+    .admin-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .admin-stat { flex: 1; min-width: 180px; background: #101827; border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .admin-stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .admin-stat .value { font-size: 22px; font-weight: 800; }
+    .admin-stat .value.crash { color: var(--accent-2); }
+    .admin-login { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .admin-login input { height: 36px; background: #0f1626; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0 10px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #1e2940; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    .hidden { display: none; }
+    .admin-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+    .admin-modal-overlay.show { display: flex; }
+    .admin-modal { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; width: min(960px, 96vw); max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+    .admin-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .admin-modal-header h3 { margin: 0; font-size: 16px; }
+    .admin-modal-close { background: transparent; border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; }
+    .admin-modal-close:hover { border-color: #3b82f6; }
+    .admin-modal-body { padding: 14px 16px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <div class="admin-card" id="loginCard">
+      <h1>Admin Access</h1>
+      <p class="muted">Enter admin key to view live crash points and round info.</p>
+      <div class="admin-login">
+        <input type="password" id="adminKey" placeholder="Admin key">
+        <button class="btn-primary" id="loginBtn">Login</button>
+        <span class="muted" id="loginMsg"></span>
+      </div>
+    </div>
+
+    <div id="dash" class="hidden">
+      <div class="admin-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h1 style="margin-bottom:4px;">Round Monitor</h1>
+          <p class="muted" style="margin:0;">Sensitive: shows predetermined crash points (current/upcoming round). Do not expose to players.</p>
+        </div>
+        <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+      </div>
+      <div class="admin-card">
+        <h2>Current Round</h2>
+        <div class="admin-row">
+          <div class="admin-stat"><div class="label">Round ID</div><div class="value" id="roundId">—</div></div>
+          <div class="admin-stat"><div class="label">State</div><div class="value" id="roundState">—</div></div>
+          <div class="admin-stat"><div class="label">Current Multiplier</div><div class="value" id="mult">—</div></div>
+          <div class="admin-stat"><div class="label">Crash At (predetermined)</div><div class="value crash" id="crashAt">—</div></div>
+          <div class="admin-stat"><div class="label">Countdown / Timer</div><div class="value" id="timer">—</div></div>
+          <div class="admin-stat"><div class="label">Next Round ID</div><div class="value" id="nextId">—</div></div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="label" style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Predetermined crashes (next 4 rounds)</div>
+          <div class="admin-row" id="upcomingCrashes">
+            <button class="admin-stat" style="text-align:left;cursor:default;background:#0f1626"><div class="label">Round 1</div><div class="value crash">—</div></button>
+            <button class="admin-stat" style="text-align:left;cursor:default;background:#0f1626"><div class="label">Round 2</div><div class="value crash">—</div></button>
+            <button class="admin-stat" style="text-align:left;cursor:default;background:#0f1626"><div class="label">Round 3</div><div class="value crash">—</div></button>
+            <button class="admin-stat" style="text-align:left;cursor:default;background:#0f1626"><div class="label">Round 4</div><div class="value crash">—</div></button>
+          </div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <h2>Recent Completed Rounds</h2>
+        <table>
+          <thead><tr><th>Round</th><th>Crash Point</th><th>Completed</th></tr></thead>
+          <tbody id="recentBody"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-card">
+        <div style="display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" id="btnWithdrawals">Withdrawal Requests</button>
+          <button class="btn btn-secondary" id="btnDeposits">Deposits</button>
+          <button class="btn btn-secondary" id="btnFailed">Failed / Cancelled / Rejected</button>
+        </div>
+      </div>
+
+      <div id="withdrawalsModal" class="admin-modal-overlay" aria-hidden="true">
+        <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="withdrawalsTitle">
+          <div class="admin-modal-header"><h3 id="withdrawalsTitle">Withdrawal Requests</h3><button class="admin-modal-close" data-close="withdrawalsModal" aria-label="Close">&times;</button></div>
+          <div class="admin-modal-body">
+            <div style="margin-bottom:8px"><input type="text" id="paySearch" placeholder="Search by player or transaction reference" style="height:34px;width:100%;max-width:420px;background:#0f1626;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 10px"></div>
+            <div style="overflow:auto"><table><thead><tr><th>Date/Time</th><th>Player</th><th>Phone</th><th>Amount</th><th>Status</th><th>Activation Fee Message</th><th>Actions</th></tr></thead><tbody id="wdBody"></tbody></table></div>
+            <div id="wdToggleWrap" style="margin:6px 0 0"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="depositsModal" class="admin-modal-overlay" aria-hidden="true">
+        <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="depositsTitle">
+          <div class="admin-modal-header"><h3 id="depositsTitle">Deposits</h3><button class="admin-modal-close" data-close="depositsModal" aria-label="Close">&times;</button></div>
+          <div class="admin-modal-body">
+            <div style="overflow:auto"><table><thead><tr><th>Date/Time</th><th>Player</th><th>Phone</th><th>Amount</th><th>Status</th><th>Payment Message</th><th>Actions</th></tr></thead><tbody id="depBody"></tbody></table></div>
+            <div id="depToggleWrap" style="margin:6px 0 0"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="failedModal" class="admin-modal-overlay" aria-hidden="true">
+        <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="failedTitle">
+          <div class="admin-modal-header"><h3 id="failedTitle">Failed / Cancelled / Rejected</h3><button class="admin-modal-close" data-close="failedModal" aria-label="Close">&times;</button></div>
+          <div class="admin-modal-body">
+            <div style="overflow:auto"><table><thead><tr><th>Date/Time</th><th>Type</th><th>Player</th><th>Amount</th><th>Ref</th><th>Status</th><th>Reason</th></tr></thead><tbody id="failBody"></tbody></table></div>
+            <div id="failToggleWrap" style="margin:6px 0 0"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io({ transports: ['websocket', 'polling'] });
+    const $ = (id) => document.getElementById(id);
+    const KEY = 'aviator_admin_key';
+    let last = null, offset = 0, authed = false;
+    let pay = null;
+    const view = { wd: false, dep: false, fail: false };
+    const RECENT_N = 5;
+
+    function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200); }
+    function fmtTime(ms){ if(!ms) return '—'; const d=new Date(ms); return d.toLocaleString(); }
+    function fmtMoney(n){ return 'KSh ' + Number(n||0).toLocaleString('en-KE',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function showDash(){ authed = true; $('loginCard').classList.add('hidden'); $('dash').classList.remove('hidden'); $('loginMsg').textContent = ''; }
+    function showLogin(msg){
+      authed = false; last = null; pay = null;
+      $('dash').classList.add('hidden'); $('loginCard').classList.remove('hidden');
+      $('loginMsg').textContent = msg || '';
+      $('adminKey').value = '';
+      $('roundId').textContent = '—'; $('roundState').textContent = '—'; $('mult').textContent = '—';
+      $('crashAt').textContent = '—'; $('timer').textContent = '—'; $('nextId').textContent = '—';
+      if ($('upcomingCrashes')) $('upcomingCrashes').innerHTML = [1,2,3,4].map(i=>`<button class="admin-stat" style="text-align:left;cursor:default;background:#0f1626"><div class="label">Round ${i}</div><div class="value crash">—</div></button>`).join('');
+
+      $('recentBody').innerHTML = '';
+      ['wdBody','depBody','failBody'].forEach(id => { const el=$(id); if(el) el.innerHTML=''; });
+    }
+
+    function tryLogin(key, silent){
+      if (!key) return;
+      socket.emit('admin_login', { key }, (ack) => {
+        if (ack && ack.ok) {
+          localStorage.setItem(KEY, key);
+          showDash();
+          render();
+          renderPayments();
+          socket.emit('request_state');
+          if (!silent) toast('Admin access granted');
+        } else {
+          localStorage.removeItem(KEY);
+          showLogin(silent ? '' : ((ack && ack.msg) || 'Login failed'));
+        }
+      });
+    }
+
+    $('loginBtn').onclick = () => tryLogin(($('adminKey').value || '').trim(), false);
+    $('adminKey').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('loginBtn').click(); });
+
+    $('logoutBtn').onclick = () => {
+      localStorage.removeItem(KEY);
+      showLogin('');
+      toast('Logged out');
+      socket.disconnect();
+      socket.connect();
+    };
+
+    socket.on('connect', () => {
+      const saved = localStorage.getItem(KEY);
+      if (saved) {
+        authed = false;
+        tryLogin(saved, true);
+      }
+    });
+
+    socket.on('admin_state', (s) => {
+      last = s;
+      if (s && s.serverTime) offset = s.serverTime - Date.now();
+      if (authed) render();
+    });
+
+    socket.on('admin_payments_state', (s) => {
+      pay = s;
+      if (authed) renderPayments();
+    });
+
+    async function adminPost(path, body){
+      const key = localStorage.getItem(KEY) || '';
+      const res = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json', 'x-admin-key': key }, body: JSON.stringify(body||{}) });
+      const data = await res.json().catch(()=>null);
+      if (!res.ok || !data || !data.ok) throw new Error((data && data.msg) || 'Request failed');
+      if (data.data) { pay = data.data; renderPayments(); }
+      return data;
+    }
+
+    function renderPayments(){
+      if (!pay) return;
+      const s = pay.settings || {};
+      const t = pay.totals || {};
+      if ($('pTotalDep')) $('pTotalDep').textContent = fmtMoney(t.totalDeposits||0);
+      if ($('pTotalWd')) $('pTotalWd').textContent = fmtMoney(t.totalWithdrawals||0);
+      if ($('pPending')) $('pPending').textContent = String(t.pendingWithdrawals||0);
+      const q = (($('paySearch') && $('paySearch').value) || '').toLowerCase().trim();
+      const players = pay.players || {};
+      const pname = (id) => (players[id] && players[id].username) ? players[id].username : id;
+      const match = (parts) => !q || parts.join(' ').toLowerCase().includes(q);
+
+      const wdsAll = (pay.withdrawals || []).filter(w => match([pname(w.user_id), w.user_id, w.phone_number, w.transaction_reference, w.conversation_id, w.id, w.status, w.description, w.paymentMessage]));
+      const wds = view.wd ? wdsAll : wdsAll.slice(0, RECENT_N);
+      $('wdBody').innerHTML = wds.map(w => {
+        const canApprove = w.status === 'AWAITING_APPROVAL' || w.status === 'PENDING';
+        const canReject = ['PENDING','APPROVED','AWAITING_PAYMENT','AWAITING_APPROVAL','MARKED_PAID','PROCESSING'].includes(w.status);
+        let acts = '';
+        if (canApprove) acts += `<button data-act="approve" data-id="${esc(w.id)}" class="btn-primary" style="padding:4px 8px;font-size:11px;margin-right:4px">Approve</button>`;
+        if (canReject) acts += `<button data-act="reject" data-id="${esc(w.id)}" class="btn btn-secondary" style="padding:4px 8px;font-size:11px">Reject</button>`;
+        const msg = w.paymentMessage || w.description || '—';
+        return `<tr><td>${fmtTime(w.created_at)}</td><td>${esc(pname(w.user_id))}</td><td>${esc(w.phone_number||'')}</td><td>${fmtMoney(w.amount)}</td><td title="${esc(w.description||'')}">${esc(w.status)}</td><td style="max-width:320px;white-space:pre-wrap;font-size:12px">${esc(msg)}</td><td>${acts}</td></tr>`;
+      }).join('') || '<tr><td colspan="7" class="muted">No withdrawal requests</td></tr>';
+      const wdW=$('wdToggleWrap'); if(wdW){ if(wdsAll.length>RECENT_N){ wdW.innerHTML=`<button class="btn btn-secondary" id="wdToggleBtn" style="font-size:11px;padding:4px 10px">${view.wd?'Show less':'View all ('+wdsAll.length+')'}</button>`; const b=$('wdToggleBtn'); if(b) b.onclick=()=>{view.wd=!view.wd; renderPayments();}; } else { wdW.innerHTML=''; } }
+
+      $('wdBody').querySelectorAll('button[data-act]').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.dataset.id; const act = btn.dataset.act;
+          try {
+            if (act === 'approve') { await adminPost(`/api/admin/withdrawals/${id}/approve`, { admin: 'admin' }); toast('Withdrawal approved'); }
+            else { await adminPost(`/api/admin/withdrawals/${id}/reject`, { admin: 'admin' }); toast('Withdrawal rejected'); }
+          } catch (e) { toast(e.message || 'Action failed'); }
+        };
+      });
+
+      const depsAll = (pay.deposits || []).filter(d => match([pname(d.user_id), d.user_id, d.phone_number, d.mpesa_receipt_number, d.checkout_request_id, d.id, d.status, d.description, d.paymentMessage]));
+      const deps = view.dep ? depsAll : depsAll.slice(0, RECENT_N);
+      $('depBody').innerHTML = deps.map(d => {
+        const msg = d.paymentMessage || d.description || '—';
+        const canAct = ['AWAITING_APPROVAL','AWAITING_PAYMENT','MARKED_PAID','PROCESSING','PENDING'].includes(d.status);
+        const acts = canAct ? `<button data-dact="approve" data-id="${esc(d.id)}" class="btn-primary" style="padding:4px 8px;font-size:11px;margin-right:4px">Approve & Credit</button><button data-dact="reject" data-id="${esc(d.id)}" class="btn btn-secondary" style="padding:4px 8px;font-size:11px">Reject</button>` : '';
+        return `<tr><td>${fmtTime(d.created_at)}</td><td>${esc(pname(d.user_id))}</td><td>${esc(d.phone_number||'')}</td><td>${fmtMoney(d.amount)}</td><td title="${esc(d.description||'')}">${esc(d.status)}</td><td style="max-width:320px;white-space:pre-wrap;font-size:12px">${esc(msg)}</td><td>${acts}</td></tr>`;
+      }).join('') || '<tr><td colspan="7" class="muted">No deposits</td></tr>';
+      const depW=$('depToggleWrap'); if(depW){ if(depsAll.length>RECENT_N){ depW.innerHTML=`<button class="btn btn-secondary" id="depToggleBtn" style="font-size:11px;padding:4px 10px">${view.dep?'Show less':'View all ('+depsAll.length+')'}</button>`; const b=$('depToggleBtn'); if(b) b.onclick=()=>{view.dep=!view.dep; renderPayments();}; } else { depW.innerHTML=''; } }
+
+      $('depBody').querySelectorAll('button[data-dact]').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.dataset.id; const act = btn.dataset.dact;
+          try {
+            if (act === 'approve') { await adminPost(`/api/admin/deposits/${id}/approve`, { admin: 'admin' }); toast('Deposit approved and credited'); }
+            else { await adminPost(`/api/admin/deposits/${id}/reject`, { admin: 'admin' }); toast('Deposit rejected'); }
+          } catch (e) { toast(e.message || 'Action failed'); }
+        };
+      });
+
+      const failed = [];
+      (pay.deposits || []).forEach(d => { if (['FAILED','CANCELLED','REJECTED'].includes(d.status)) failed.push({at:d.completed_at||d.created_at,type:'Deposit',user:pname(d.user_id),amount:d.amount,ref:d.mpesa_receipt_number||d.id,status:d.status,reason:d.failure_reason||''}); });
+      (pay.withdrawals || []).forEach(w => { if (['FAILED','CANCELLED','REJECTED'].includes(w.status)) failed.push({at:w.completed_at||w.created_at,type:'Withdrawal',user:pname(w.user_id),amount:w.amount,ref:w.transaction_reference||w.id,status:w.status,reason:w.failure_reason||''}); });
+      const failedAll = failed.filter(x => match([x.user,x.ref,x.status,x.reason,x.type])).sort((a,b)=>(b.at||0)-(a.at||0));
+      const failedF = view.fail ? failedAll : failedAll.slice(0, RECENT_N);
+      $('failBody').innerHTML = failedF.map(x => `<tr><td>${fmtTime(x.at)}</td><td>${esc(x.type)}</td><td>${esc(x.user)}</td><td>${fmtMoney(x.amount)}</td><td>${esc(x.ref||'')}</td><td>${esc(x.status)}</td><td>${esc(x.reason||'')}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">No failed/cancelled/rejected transactions</td></tr>';
+      const fW=$('failToggleWrap'); if(fW){ if(failedAll.length>RECENT_N){ fW.innerHTML=`<button class="btn btn-secondary" id="failToggleBtn" style="font-size:11px;padding:4px 10px">${view.fail?'Show less':'View all ('+failedAll.length+')'}</button>`; const b=$('failToggleBtn'); if(b) b.onclick=()=>{view.fail=!view.fail; renderPayments();}; } else { fW.innerHTML=''; } }
+      }
+    if ($('paySearch')) $('paySearch').addEventListener('input', renderPayments);
+    function openAdminModal(id){ const el=$(id); if(!el) return; el.classList.add('show'); el.setAttribute('aria-hidden','false'); }
+    function closeAdminModal(id){ const el=$(id); if(!el) return; el.classList.remove('show'); el.setAttribute('aria-hidden','true'); }
+    if ($('btnWithdrawals')) $('btnWithdrawals').onclick = () => openAdminModal('withdrawalsModal');
+    if ($('btnDeposits')) $('btnDeposits').onclick = () => openAdminModal('depositsModal');
+    if ($('btnFailed')) $('btnFailed').onclick = () => openAdminModal('failedModal');
+    document.querySelectorAll('.admin-modal-close').forEach(btn => btn.addEventListener('click', () => closeAdminModal(btn.dataset.close)));
+    document.querySelectorAll('.admin-modal-overlay').forEach(ov => ov.addEventListener('click', (e) => { if (e.target === ov) closeAdminModal(ov.id); }));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.admin-modal-overlay.show').forEach(m => closeAdminModal(m.id)); });
+    function render(){
+      if(!last || !last.round) return;
+      const r = last.round; const t = Date.now()+offset;
+      let mult = r.multiplier, timer = '—';
+      if (r.state === 'BETTING') { mult = 1; timer = Math.max(0, Math.ceil((r.bettingEndsAt - t)/1000)) + 's to start'; }
+      else if (r.state === 'RUNNING') {
+        const elapsed = Math.max(0, t - r.startedAt);
+        mult = Math.min(r.crashPoint, Math.max(1, Math.floor(Math.exp(0.06 * (elapsed/1000)) * 100)/100));
+        timer = 'Flying';
+      } else if (r.state === 'CRASHED') { mult = r.crashPoint; timer = Math.max(0, Math.ceil((r.nextAt - t)/1000)) + 's to next'; }
+      $('roundId').textContent = r.roundId || '—';
+      $('roundState').textContent = r.state || '—';
+      $('mult').textContent = Number(mult).toFixed(2) + 'x';
+      $('crashAt').textContent = Number(r.crashPoint).toFixed(2) + 'x';
+      $('timer').textContent = timer;
+      $('nextId').textContent = r.nextRoundId || '—';
+      const up = (last && last.upcoming) ? last.upcoming : [{label:'This round', roundId:r.roundId, crashPoint:r.crashPoint},{label:'Next +1', roundId:r.nextRoundId, crashPoint:null},{label:'Next +2', roundId:'—', crashPoint:null},{label:'Next +3', roundId:'—', crashPoint:null}];
+      if ($('upcomingCrashes')) $('upcomingCrashes').innerHTML = up.slice(0,4).map(u => `<button class="admin-stat" type="button" style="text-align:left;cursor:default;background:#0f1626;border:1px solid var(--border)"><div class="label">${esc(u.label||'Round')} · ${esc(u.roundId||'—')}</div><div class="value crash" style="font-size:20px">${u.crashPoint!=null?Number(u.crashPoint).toFixed(2)+'x':'—'}</div></button>`).join('');
+      const rows = (last.completedRounds || []).slice().reverse();
+      $('recentBody').innerHTML = rows.map(x => `<tr><td>${x.roundId}</td><td>${Number(x.crashPoint).toFixed(2)}x</td><td>${fmtTime(x.crashedAt)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">No completed rounds yet</td></tr>';
+    }
+    setInterval(render, 100);
+  </script>
+</body>
+</html>
+

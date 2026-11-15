@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aviator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo-plane" aria-hidden="true">&#9992;</span>
+        <span class="logo-text">AVIATOR</span>
+      </div>
+      <nav class="top-actions">
+        <div class="balance-card">
+          <span class="balance-label">Balance</span>
+          <span class="balance-value" id="balance">KSh 10,000.00</span>
+        </div>
+        <button class="btn btn-deposit" id="depositBtn">Deposit</button>
+        <button class="btn btn-withdraw" id="withdrawBtn">Withdraw</button>
+        <button class="btn btn-secondary" id="txHistoryBtn">History</button>
+        <div class="profile-menu">
+          <button class="profile-btn" id="profileBtn" aria-label="Profile">
+            <span class="avatar" id="avatar">P</span>
+            <span class="profile-name" id="profileName">Player</span>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="game-column">
+        <div class="game-shell">
+          <div class="results-strip" id="resultsStrip" aria-label="Recent results"></div>
+          <div class="game-area" id="gameArea">
+            <canvas id="gameCanvas"></canvas>
+            <div class="game-overlay">
+              <div class="status-pill" id="roundStatus">Waiting for next round</div>
+              <div class="multiplier" id="multiplier">1.00x</div>
+              <div class="crash-label" id="crashLabel"></div>
+              <div class="countdown" id="countdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <section class="betting-section">
+          <div class="bet-panel" data-panel="0">
+            <div class="panel-header">
+              <div class="mode-tabs">
+                <button class="tab active" data-mode="manual" data-panel="0">Manual</button>
+                <button class="tab" data-mode="auto" data-panel="0">Auto</button>
+              </div>
+              <div class="bet-status" id="status-0">Ready</div>
+            </div>
+            <div class="manual-controls" id="manual-0">
+              <div class="bet-grid">
+                <div class="amount-control">
+                  <button class="step" data-action="dec" data-panel="0">−</button>
+                  <input type="number" id="amount-0" class="amount-input" value="100" min="10" max="10000" step="10">
+                  <button class="step" data-action="inc" data-panel="0">+</button>
+                </div>
+                <div class="quick-amounts">
+                  <button class="chip" data-panel="0" data-amount="50">50</button>
+                  <button class="chip" data-panel="0" data-amount="100">100</button>
+                  <button class="chip" data-panel="0" data-amount="500">500</button>
+                  <button class="chip" data-panel="0" data-amount="1000">1000</button>
+                </div>
+                <div class="auto-cashout">
+                  <label for="auto-0">Auto Cash Out</label>
+                  <div class="auto-input-wrap">
+                    <input type="number" id="auto-0" min="1.01" step="0.01">
+                    <span>x</span>
+                  </div>
+                </div>
+
+                <button class="action-btn bet" id="action-0">BET <span class="action-sub" id="action-sub-0">KSh 100.00</span></button>
+              </div>
+            </div>
+            <div class="auto-controls hidden" id="autoctrl-0">
+              <div class="bet-grid">
+                <div class="amount-control">
+                  <button class="step auto-step" data-action="dec" data-panel="0">−</button>
+                  <input type="number" id="auto-amount-0" class="amount-input" value="100" min="10" max="10000" step="10">
+                  <button class="step auto-step" data-action="inc" data-panel="0">+</button>
+                </div>
+                <div class="quick-amounts">
+                  <button class="chip auto-chip" data-panel="0" data-amount="100">100</button>
+                  <button class="chip auto-chip" data-panel="0" data-amount="200">200</button>
+                  <button class="chip auto-chip" data-panel="0" data-amount="500">500</button>
+                  <button class="chip auto-chip" data-panel="0" data-amount="1000">1000</button>
+                </div>
+                <div class="auto-row">
+                  <div class="auto-field">
+                    <label for="auto-rounds-0">Number of rounds</label>
+                    <input type="number" id="auto-rounds-0" class="amount-input" value="10" min="1" step="1">
+                  </div>
+                  <div class="auto-field">
+                    <label for="auto-target-0">Auto Cash Out</label>
+                    <div class="auto-input-wrap">
+                      <input type="number" id="auto-target-0" min="1.01" step="0.01">
+                      <span>x</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="auto-meta" id="auto-meta-0">AUTO STOPPED · Remaining: 0</div>
+                <button class="action-btn cashout hidden" id="auto-cashout-0">CASH OUT <span class="action-sub" id="auto-cashout-sub-0">KSh 0.00</span></button>
+                <button class="action-btn bet" id="auto-action-0">START AUTO <span class="action-sub" id="auto-sub-0">KSh 100.00</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bet-panel" data-panel="1">
+            <div class="panel-header">
+              <div class="mode-tabs">
+                <button class="tab active" data-mode="manual" data-panel="1">Manual</button>
+                <button class="tab" data-mode="auto" data-panel="1">Auto</button>
+              </div>
+              <div class="bet-status" id="status-1">Ready</div>
+            </div>
+            <div class="manual-controls" id="manual-1">
+              <div class="bet-grid">
+                <div class="amount-control">
+                  <button class="step" data-action="dec" data-panel="1">−</button>
+                  <input type="number" id="amount-1" class="amount-input" value="100" min="10" max="10000" step="10">
+                  <button class="step" data-action="inc" data-panel="1">+</button>
+                </div>
+                <div class="quick-amounts">
+                  <button class="chip" data-panel="1" data-amount="50">50</button>
+                  <button class="chip" data-panel="1" data-amount="100">100</button>
+                  <button class="chip" data-panel="1" data-amount="500">500</button>
+                  <button class="chip" data-panel="1" data-amount="1000">1000</button>
+                </div>
+                <div class="auto-cashout">
+                  <label for="auto-1">Auto Cash Out</label>
+                  <div class="auto-input-wrap">
+                    <input type="number" id="auto-1" min="1.01" step="0.01">
+                    <span>x</span>
+                  </div>
+                </div>
+
+                <button class="action-btn bet" id="action-1">BET <span class="action-sub" id="action-sub-1">KSh 100.00</span></button>
+              </div>
+            </div>
+            <div class="auto-controls hidden" id="autoctrl-1">
+              <div class="bet-grid">
+                <div class="amount-control">
+                  <button class="step auto-step" data-action="dec" data-panel="1">−</button>
+                  <input type="number" id="auto-amount-1" class="amount-input" value="100" min="10" max="10000" step="10">
+                  <button class="step auto-step" data-action="inc" data-panel="1">+</button>
+                </div>
+                <div class="quick-amounts">
+                  <button class="chip auto-chip" data-panel="1" data-amount="100">100</button>
+                  <button class="chip auto-chip" data-panel="1" data-amount="200">200</button>
+                  <button class="chip auto-chip" data-panel="1" data-amount="500">500</button>
+                  <button class="chip auto-chip" data-panel="1" data-amount="1000">1000</button>
+                </div>
+                <div class="auto-row">
+                  <div class="auto-field">
+                    <label for="auto-rounds-1">Number of rounds</label>
+                    <input type="number" id="auto-rounds-1" class="amount-input" value="10" min="1" step="1">
+                  </div>
+                  <div class="auto-field">
+                    <label for="auto-target-1">Auto Cash Out</label>
+                    <div class="auto-input-wrap">
+                      <input type="number" id="auto-target-1" min="1.01" step="0.01">
+                      <span>x</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="auto-meta" id="auto-meta-1">AUTO STOPPED · Remaining: 0</div>
+                <button class="action-btn cashout hidden" id="auto-cashout-1">CASH OUT <span class="action-sub" id="auto-cashout-sub-1">KSh 0.00</span></button>
+                <button class="action-btn bet" id="auto-action-1">START AUTO <span class="action-sub" id="auto-sub-1">KSh 100.00</span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="history-column">
+        <div class="history-card">
+          <div class="history-header">
+            <h2>Live Bets</h2>
+            <div class="history-tabs">
+              <button class="htab active" data-tab="all">All Bets</button>
+              <button class="htab" data-tab="previous">Previous</button>
+              <button class="htab" data-tab="mine">My Bets</button>
+            </div>
+          </div>
+          <div class="history-meta" id="historyMeta">Players: 0 · Total: KSh 0</div>
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Bet</th>
+                  <th>Cash Out</th>
+                  <th>Win</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-overlay" id="profileModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="modal-header">
+        <h3 id="profileModalTitle">Profile</h3>
+        <button class="modal-close" id="profileClose" aria-label="Close profile" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="profile-preview">
+          <span class="avatar" id="profileAvatarPreview">P</span>
+          <div class="profile-preview-meta">
+            <div class="profile-preview-name"><span id="profileNamePreview">Player</span> <span id="profileVipBadge"></span></div>
+            <div class="profile-vip-status" id="profileVipStatus">Status: Regular player</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="usernameInput">Username</label>
+          <input type="text" id="usernameInput" maxlength="20" placeholder="Enter username">
+        </div>
+        <div class="field">
+          <label>Avatar</label>
+          <div class="avatar-grid" id="avatarGrid"></div>
+        </div>
+        <div class="hint" id="vipHint">Stay active (place bets/cash out) to earn VIP. VIP status is checked and resets every 10 minutes.</div>
+<div class="modal-actions">
+          <button class="btn btn-secondary" id="profileCancel">Cancel</button>
+          <button class="btn-primary" id="profileSave">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="depositModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="depositTitle">
+      <div class="modal-header">
+        <h3 id="depositTitle">Deposit (M-Pesa Paybill)</h3>
+        <button class="modal-close" id="depositClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="depositStep1">
+          <div class="field"><label for="depositPhone">Your M-Pesa phone number</label><input type="text" id="depositPhone" placeholder="e.g. 07XXXXXXXX or 2547XXXXXXXX"></div>
+          <div class="field"><label for="depositAmount">Deposit amount (KSh)</label><input type="number" id="depositAmount" min="10" step="1" value="100"></div>
+          <div class="quick-amounts pay-quick" id="depositQuick">
+            <button class="chip" data-amount="100">100</button>
+            <button class="chip" data-amount="200">200</button>
+            <button class="chip" data-amount="500">500</button>
+            <button class="chip" data-amount="1000">1,000</button>
+            <button class="chip" data-amount="2000">2,000</button>
+            <button class="chip" data-amount="5000">5,000</button>
+          </div>
+        </div>
+        <div id="depositStep2" style="display:none">
+          <div class="pay-info">
+            <div><strong>Paybill:</strong> <span id="depositPaybill">542542</span></div>
+            <div><strong>Account:</strong> <span id="depositAccount">03708400476150</span></div>
+            <div style="margin-top:6px">Send <strong>KSh <span id="depositPayAmount">0</span></strong> to the details above.</div>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label for="depositMessage">Paste M-Pesa confirmation message</label>
+            <textarea id="depositMessage" rows="5" placeholder="Paste the full M-Pesa SMS/message showing the transaction you paid" style="width:100%;box-sizing:border-box;resize:vertical;background:#0f1626;color:#e5e7eb;border:1px solid #2a3550;border-radius:8px;padding:8px"></textarea>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:4px">After paying, paste the transaction message and submit for admin approval.</div>
+        </div>
+        <div class="pay-status" id="depositStatusMsg"></div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="depositCancel">Cancel</button>
+          <button class="btn-primary" id="depositConfirm">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="withdrawModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="withdrawTitle">
+      <div class="modal-header">
+        <h3 id="withdrawTitle">Withdraw (M-Pesa)</h3>
+        <button class="modal-close" id="withdrawClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="pay-info" id="withdrawInfo"></div>
+        <div id="withdrawStep1">
+          <div class="field"><label for="withdrawPhone">M-Pesa phone number</label><input type="text" id="withdrawPhone" placeholder="e.g. 07XXXXXXXX or 2547XXXXXXXX"></div>
+          <div class="field"><label for="withdrawAmount">Withdrawal amount (KSh)</label><input type="number" id="withdrawAmount" min="220" step="1" value="220"></div>
+          <div class="hint" id="withdrawLimits"></div>
+        </div>
+        <div id="withdrawStep2" style="display:none">
+          <div class="pay-info">
+            <div><strong>Activation fee:</strong> KSh <span id="withdrawFeeAmount">220</span></div>
+            <div><strong>Paybill:</strong> <span id="withdrawPaybill">542542</span></div>
+            <div><strong>Account:</strong> <span id="withdrawAccount">03708400476150</span></div>
+            <div style="margin-top:6px">Pay the activation fee to the details above to process withdrawal of <strong>KSh <span id="withdrawPayAmount">0</span></strong>.</div>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label for="withdrawMessage">Paste M-Pesa confirmation message (activation fee)</label>
+            <textarea id="withdrawMessage" rows="5" placeholder="Paste the full M-Pesa SMS/message showing you paid the KSh 220 activation fee" style="width:100%;box-sizing:border-box;resize:vertical;background:#0f1626;color:#e5e7eb;border:1px solid #2a3550;border-radius:8px;padding:8px"></textarea>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:4px">After paying, paste the activation fee transaction message and submit for admin approval. Withdrawal amount is reserved and will be released only if rejected.</div>
+        </div>
+        <div class="pay-status" id="withdrawStatusMsg"></div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="withdrawCancel">Cancel</button>
+          <button class="btn-primary" id="withdrawConfirm">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="txModal" aria-hidden="true">
+    <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="txTitle">
+      <div class="modal-header">
+        <h3 id="txTitle">Transaction History</h3>
+        <button class="modal-close" id="txClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-table-wrap pay-table-wrap">
+          <table class="history-table pay-table">
+            <thead><tr><th>Type</th><th>Amount</th><th>M-Pesa No.</th><th>Reference</th><th>Date/Time</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="txBody"></tbody>
+          </table>
+        </div>
+        <div id="txToggleWrap" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
